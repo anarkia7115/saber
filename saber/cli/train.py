@@ -12,8 +12,8 @@ python -m saber.cli.train --dataset_folder ./datasets/NCBI_disease_BIO --epochs 
 """
 import logging
 
-from ..config import Config
-from ..saber import Saber
+from saber.config import Config
+from saber.saber import Saber
 
 
 def main():
