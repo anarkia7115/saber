@@ -8,6 +8,7 @@ from keras.callbacks import ModelCheckpoint, TensorBoard
 from .. import constants
 from ..metrics import Metrics
 from .generic_utils import make_dir
+from ..cyclical_learning_rate_wrapper import CyclicLRWRapper
 
 # I/O
 
@@ -160,6 +161,33 @@ def setup_metrics_callback(config, datasets, training_data, output_dir, fold=Non
         metrics.append(metric)
 
     return metrics
+
+def setup_lr_test_callback(config, datasets, training_data, output_dir):
+    """ Creates Keras LR Test Callback objects, one for each dataset in 'datasets'
+
+    Args:
+        config (Config): Contains a set of harmonzied arguments provided in a *.ini file and,
+            optionally, from the command line.
+        datasets (list): A list of Dataset objects.
+        training_data (dict): A dictionary containing training data (inputs and targets).
+        output_dir (list): List of directories to save model output to, one for each model.
+
+    Returns:
+        A list of LR Test objects, one for each dataset in `datasets`.
+    """
+    LR_callback = []
+    for i in range(len(datasets)):
+        clr = []
+        train_size = len(training_data[i]['x_train'])
+        if config.lr_test:
+            cyclic_step_size = (train_size * config.epochs) / config.batch_size
+            clr = CyclicLRWRapper(min_lr=config.min_lr,
+                                  max_lr=config.max_lr,
+                                  step_size=cyclic_step_size,
+                                  mode='triangular',
+                                  output_dir = output_dir)
+        LR_callback.append(clr)
+    return LR_callback
 
 def setup_callbacks(config, output_dir):
     """Returns a list of Keras Callback objects to use during training.
