@@ -156,7 +156,6 @@ class Config(object):
             args['batch_size'] = config['training'].getint('batch_size')
             args['k_folds'] = config['training'].getint('k_folds')
             args['epochs'] = config['training'].getint('epochs')
-            args['LR_test'] = config['training'].getboolean('LR_test')
             args['max_lr'] = config['training'].getfloat('max_lr')
             args['min_lr'] = config['training'].getfloat('min_lr')
             args['criteria'] = config['training']['criteria']
@@ -296,8 +295,6 @@ class Config(object):
         parser.add_argument('--variational_dropout', required=False, action='store_true',
                             help=('Pass this flag if variational dropout should be used. NOTE THAT '
                                   'THIS IS TEMPORARY.'))
-        parser.add_argument('--LR_test', required=False, action='store_true',
-                            help=('Pass this flag to perform an learning rate test.'))
         parser.add_argument('--max_lr', required=False, type=float,
                             help=('float >= 0. Maximum learning rate used during cyclic learning.'))
         parser.add_argument('--min_lr', required=False, type=float,
