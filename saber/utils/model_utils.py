@@ -185,7 +185,8 @@ def setup_lr_test_callback(config, datasets, training_data, output_dir):
                                   max_lr=config.max_lr,
                                   step_size=cyclic_step_size,
                                   mode='triangular',
-                                  output_dir = output_dir)
+                                  output_dir = output_dir,
+                                  lr_test = config.lr_test)
         LR_callback.append(clr)
     return LR_callback
 
