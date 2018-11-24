@@ -22,6 +22,7 @@ def main():
     config = Config(cli=True)
     # indicate that we are performing an lr test
     config.lr_test = True
+    config.epochs = 1
     saber = Saber(config)
 
     if config.pretrained_model:
