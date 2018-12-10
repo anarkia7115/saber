@@ -1,16 +1,20 @@
-from keras_contrib.callbacks import CyclicLR
 import json
+import os
+
+from keras_contrib.callbacks import CyclicLR
+
 import matplotlib.pyplot as plt
+
 
 class CyclicLRWRapper(CyclicLR):
     '''
     Wrapper for CyclicLR to overwrite the on_epoch_end function
     Saves cyclic learning info in the same format as the rest of the callbacks in saber
     '''
-    def __init__(self, min_lr, max_lr, step_size, mode, output_dir, lr_test=False):
-        super(CyclicLRWRapper, self).__init__(base_lr=min_lr, max_lr=max_lr, step_size = step_size, mode=mode)
+    def __init__(self, min_lr, max_lr, step_size, mode, output_dir, lr_find=False):
+        super(CyclicLRWRapper, self).__init__(base_lr=min_lr, max_lr=max_lr, step_size=step_size, mode=mode)
         self.output_dir = output_dir
-        self.lr_test = lr_test
+        self.lr_find = lr_find
 
     def on_train_end(self, logs):
         '''
@@ -32,7 +36,7 @@ class CyclicLRWRapper(CyclicLR):
         plt.close()
 
         #save plots of data
-        if self.lr_test:
+        if self.lr_find:
             #lr vs loss
             plt.plot(self.history['lr'], self.history['loss'])
             plt.xlabel('learning rate')
@@ -46,6 +50,6 @@ class CyclicLRWRapper(CyclicLR):
             plt.xlabel('iterations')
             plt.ylabel('loss')
             plt.title('iterations vs loss')
-            plt.savefig(self.output_dir+'iterations_vs_loss.png')
+            plt.savefig(os.path.join(self.output_dir, 'iterations_vs_loss.png'))
             plt.close()
         return

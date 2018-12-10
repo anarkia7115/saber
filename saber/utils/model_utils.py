@@ -6,9 +6,9 @@ from time import strftime
 from keras.callbacks import ModelCheckpoint, TensorBoard
 
 from .. import constants
+from ..cyclical_learning_rate_wrapper import CyclicLRWRapper
 from ..metrics import Metrics
 from .generic_utils import make_dir
-from ..cyclical_learning_rate_wrapper import CyclicLRWRapper
 
 # I/O
 
@@ -94,7 +94,7 @@ def setup_checkpoint_callback(config, output_dir):
         output_dir (lst): A list of output directories, one for each dataset.
 
     Returns:
-        checkpointer: A Keras CallBack object for per epoch model checkpointing.
+        A list of CallBack objects for model checkpointing, one for each dataset in `datasets`.
     """
     checkpointers = []
     for dir_ in output_dir:
@@ -113,21 +113,22 @@ def setup_checkpoint_callback(config, output_dir):
     return checkpointers
 
 def setup_tensorboard_callback(output_dir):
-    """Setup logs for use with TensorBoard.
+    """Setup a callback which generates logs for use with TensorBoard.
 
-    This callback writes a log for TensorBoard, which allows you to visualize dynamic graphs of
-    your training and test metrics, as well as activation histograms for the different layers in
-    your model. Logs are saved as `tensorboard_logs` at the top level of each directory in
-    `output_dir`.
+    Retruns a list of callback objects, one for model corresponding to an output directory in
+    `output_dir`, which writes a log for use with TensorBoard. These logs allow you to visualize
+    dynamic graphs of your training and test metrics, as well as activation histograms for the
+    different layers in your model. Logs are saved as `tensorboard_logs` at the top level of
+    each directory in `output_dir`.
 
     Args:
         output_dir (lst): A list of output directories, one for each dataset.
 
     Returns:
-        A list of Keras CallBack object for logging TensorBoard visualizations.
+        A list of TensorBoard CallBack objects, one for each dataset in `datasets`.
 
     Example:
-        >>> tensorboard --logdir=/path_to_tensorboard_logs
+        $ tensorboard --logdir=/path_to_tensorboard_logs
     """
     tensorboards = []
     for dir_ in output_dir:
@@ -148,7 +149,7 @@ def setup_metrics_callback(config, datasets, training_data, output_dir, fold=Non
         fold (int): The current fold in k-fold cross-validation. Defaults to None.
 
     Returns:
-        A list of Metric objects, one for each dataset in `datasets`.
+        A list of Metric Callback objects, one for each dataset in `datasets`.
     """
     metrics = []
     for i, dataset in enumerate(datasets):
@@ -162,35 +163,40 @@ def setup_metrics_callback(config, datasets, training_data, output_dir, fold=Non
 
     return metrics
 
-def setup_lr_test_callback(config, datasets, training_data, output_dir):
-    """ Creates Keras LR Test Callback objects, one for each dataset in 'datasets'
+def setup_clr_callback(config, output_dir, training_data):
+    """Setup a Keras LR Test Callback object for using cyclic learning rates.
+
+    Retruns a list of callback objects, one for model corresponding to an output directory in
+    `output_dir`, which allow you to train a model using cyclic learning rates. Cyclic learning
+    rates vary the learning rate beween upper and lower bounds during training.
 
     Args:
         config (Config): Contains a set of harmonzied arguments provided in a *.ini file and,
             optionally, from the command line.
-        datasets (list): A list of Dataset objects.
-        training_data (dict): A dictionary containing training data (inputs and targets).
         output_dir (list): List of directories to save model output to, one for each model.
+        training_data (dict): A dictionary containing training data (inputs and targets).
 
     Returns:
-        A list of LR Test objects, one for each dataset in `datasets`.
+        A list of CyclicLRWRapper Callback objects, one for each dataset in `datasets`.
     """
-    LR_callback = []
-    for i in range(len(datasets)):
-        clr = []
-        train_size = len(training_data[i]['x_train'])
-        if config.lr_test:
-            cyclic_step_size = (train_size * config.epochs) / config.batch_size
-            clr = CyclicLRWRapper(min_lr=config.min_lr,
-                                  max_lr=config.max_lr,
-                                  step_size=cyclic_step_size,
-                                  mode='triangular',
-                                  output_dir = output_dir,
-                                  lr_test = config.lr_test)
-        LR_callback.append(clr)
-    return LR_callback
+    clr_callbacks = []
+    for i, _ in enumerate(output_dir):
+        # train size is the number of examples (sentences) in a single epoch
+        train_size = training_data[i]['x_train'][0].shape[0]
+        # step size is the amount of iterations it takes to complete one half of a cycle
+        step_size = (train_size * config.epochs) / config.batch_size
 
-def setup_callbacks(config, output_dir):
+        clr = CyclicLRWRapper(min_lr=config.min_lr,
+                              max_lr=config.max_lr,
+                              step_size=step_size,
+                              mode='triangular',
+                              output_dir=output_dir[i],
+                              lr_find=config.lr_find)
+        clr_callbacks.append(clr)
+
+    return clr_callbacks
+
+def setup_callbacks(config, output_dir, training_data):
     """Returns a list of Keras Callback objects to use during training.
 
     Args:
@@ -207,6 +213,9 @@ def setup_callbacks(config, output_dir):
     # tensorboard
     if config.tensorboard:
         callbacks.append(setup_tensorboard_callback(output_dir))
+    # learning rate finder
+    if config.lr_find:
+        callbacks.append(setup_clr_callback(config, output_dir, training_data))
 
     return callbacks
 

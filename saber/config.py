@@ -156,17 +156,18 @@ class Config(object):
             args['batch_size'] = config['training'].getint('batch_size')
             args['k_folds'] = config['training'].getint('k_folds')
             args['epochs'] = config['training'].getint('epochs')
-            args['lr_test'] = config['training'].getboolean('lr_test')
-            args['max_lr'] = config['training'].getfloat('max_lr')
-            args['min_lr'] = config['training'].getfloat('min_lr')
             args['criteria'] = config['training']['criteria']
             # advanced
+            args['lr_find'] = config['advanced'].getboolean('lr_find')
+            args['max_lr'] = config['advanced'].getfloat('max_lr')
+            args['min_lr'] = config['advanced'].getfloat('min_lr')
             args['verbose'] = config['advanced'].getboolean('verbose')
             args['debug'] = config['advanced'].getboolean('debug')
             args['save_all_weights'] = config['advanced'].getboolean('save_all_weights')
             args['tensorboard'] = config['advanced'].getboolean('tensorboard')
             args['replace_rare_tokens'] = config['advanced'].getboolean('replace_rare_tokens')
             args['fine_tune_word_embeddings'] = config['advanced'].getboolean('fine_tune_word_embeddings')
+
             # TEMP
             args['variational_dropout'] = config['advanced'].getboolean('variational_dropout')
         # ConfigParser throws KeyError when key into object that does not exist
@@ -296,7 +297,7 @@ class Config(object):
         parser.add_argument('--variational_dropout', required=False, action='store_true',
                             help=('Pass this flag if variational dropout should be used. NOTE THAT '
                                   'THIS IS TEMPORARY.'))
-        parser.add_argument('--lr_test', required=False, action='store_true',
+        parser.add_argument('--lr_find', required=False, action='store_true',
                             help=('float >= 0. Maximum learning rate used during cyclic learning.'))
         parser.add_argument('--max_lr', required=False, type=float,
                             help=('float >= 0. Maximum learning rate used during cyclic learning.'))

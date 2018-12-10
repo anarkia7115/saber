@@ -3,11 +3,11 @@
 
 Run the script with:
 ```
-python -m saber.cli.lr_test
+python -m saber.cli.lr_find
 ```
 e.g.
 ```
-python -m saber.cli.lr_test --dataset_folder ./datasets/NCBI_disease_BIO --epochs 25 --min_lr 0.001 --max_lr 1
+python -m saber.cli.lr_find --dataset_folder ./datasets/NCBI_disease_BIO --epochs 25 --min_lr 0.001 --max_lr 1
 ```
 """
 import logging
@@ -21,7 +21,7 @@ def main():
     training the model, and saving the models weights."""
     config = Config(cli=True)
     # indicate that we are performing an lr test
-    config.lr_test = True
+    config.lr_find = True
     config.epochs = 1
     saber = Saber(config)
 

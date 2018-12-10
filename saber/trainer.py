@@ -22,8 +22,8 @@ class Trainer(object):
         self.model = model # model tied to this instance
 
         self.output_dir = model_utils.prepare_output_directory(self.config)
-        self.callbacks = model_utils.setup_callbacks(self.config, self.output_dir)
         self.training_data = self.model.prepare_data_for_training()
+        self.callbacks = model_utils.setup_callbacks(self.config, self.output_dir, self.training_data)
 
     def train(self):
         """Co-ordinates the training of Keras model(s) at `self.model.models`.
@@ -67,18 +67,13 @@ class Trainer(object):
                                                      training_data=self.training_data,
                                                      output_dir=self.output_dir)
 
-        #empty if self.config.lr_test is False
-        lr_test_callback = model_utils.setup_lr_test_callback(config=self.config,
-                                                              datasets=self.datasets,
-                                                              training_data=self.training_data,
-                                                              output_dir=self.output_dir)
         # training loop
         for epoch in range(self.config.epochs):
             print('Global epoch: {}/{}\n{}'.format(epoch + 1, self.config.epochs, '-' * 20))
             # get a random ordering of the dataset/model indices
             ds_idx = random.sample(range(0, len(self.datasets)), len(self.datasets))
             for i in ds_idx:
-                callbacks = [cb[i] for cb in self.callbacks] + [metrics[i]] + [lr_test_callback[i]]
+                callbacks = [cb[i] for cb in self.callbacks] + [metrics[i]]
                 self.model.models[i].fit(x=self.training_data[i]['x_train'],
                                          y=self.training_data[i]['y_train'],
                                          batch_size=self.config.batch_size,
