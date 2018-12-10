@@ -57,7 +57,7 @@ class Config(object):
                     value = getattr(self, arg)
                     # need to un-process processed arguments
                     if isinstance(value, list):
-                        value = ', '.join(value)
+                        value = ', '.join([str(v) for v in value])
                     elif isinstance(value, dict):
                         value = [str(v) for v in value.values()]
                         value = ', '.join(value)
@@ -149,7 +149,7 @@ class Config(object):
             # training
             args['optimizer'] = config['training']['optimizer']
             args['activation'] = config['training']['activation']
-            args['learning_rate'] = config['training'].getfloat('learning_rate')
+            args['learning_rate'] = config['training']['learning_rate'].split(',')
             args['decay'] = config['training'].getfloat('decay')
             args['grad_norm'] = config['training'].getfloat('grad_norm')
             args['dropout_rate'] = config['training']['dropout_rate'].split(',')
@@ -159,8 +159,6 @@ class Config(object):
             args['criteria'] = config['training']['criteria']
             # advanced
             args['lr_find'] = config['advanced'].getboolean('lr_find')
-            args['max_lr'] = config['advanced'].getfloat('max_lr')
-            args['min_lr'] = config['advanced'].getfloat('min_lr')
             args['verbose'] = config['advanced'].getboolean('verbose')
             args['debug'] = config['advanced'].getboolean('debug')
             args['save_all_weights'] = config['advanced'].getboolean('save_all_weights')
@@ -212,6 +210,8 @@ class Config(object):
             'output': float(args['dropout_rate'][1]),
             'recurrent': float(args['dropout_rate'][2]),
         }
+        # convert learning rate(s) to float
+        args['learning_rate'] = [float(lr) for lr in args['learning_rate']]
 
         return args
 
@@ -225,16 +225,19 @@ class Config(object):
 
         parser.add_argument('--config_filepath', required=False, type=str,
                             default=resource_filename(__name__, constants.CONFIG_FILENAME),
-                            help='Path to the *.ini file containing any arguments')
+                            help=('Path to the *.ini file containing arguments for the '
+                                  'hyperparameters of the model'))
         parser.add_argument('--activation', required=False, type=str,
                             help=("Activation function to use in the dense layers. Defaults to "
                                   "'relu'."))
         parser.add_argument('--batch_size', required=False, type=int,
-                            help=('Integer or None. Number of samples per gradient update.'
+                            help=('Integer. Number of samples per gradient update.'
                                   'Defaults to 32.'))
         parser.add_argument('--char_embed_dim', required=False, type=str,
-                            help='Dimension of dense embeddings to be learned for each character.')
+                            help=('Integer. Dimension of dense embeddings to be learned for each '
+                                  'character. Defaults to 30.'))
         parser.add_argument('--criteria', required=False, type=str,
+                            choices=constants.MATCHING_CRITERION,
                             help=('Matching criteria used to determine true-positives. Choices are '
                                   "'left' for left-boundary matching, 'right' for right-boundary "
                                   "matching and 'exact' for exact-boundary matching."))
@@ -261,9 +264,14 @@ class Config(object):
         parser.add_argument('--k_folds', required=False, type=int,
                             help=('Number of folds to preform in cross-validation, defaults to 5. '
                                   "Argument is ignored if 'test.*' file present in dataset_folder"))
-        parser.add_argument('--learning_rate', required=False, type=float,
-                            help=('float >= 0. Learning rate. Note that for certain optimizers '
-                                  'this value is ignored'))
+        parser.add_argument('--learning_rate', required=False, nargs='+', type=float,
+                            help=('float >= 0. Provide a single value to set the learning rate '
+                                  'for the chosen optimizer (note that for certain optimizers this '
+                                  'value is ignored). Provide two values (representing min and max '
+                                  'learning rate bounds) in order overwrite the learning rate of '
+                                  'the chosen optimizer with a cyclic schedule.'))
+        parser.add_argument('--lr_find', required=False, action='store_true',
+                            help=('Pass this argument in order to run an LR range test.'))
         parser.add_argument('--epochs', required=False, type=int,
                             help=('Integer. Number of epochs to train the model. An epoch is an '
                                   'iteration over all data provided.'))
@@ -297,12 +305,6 @@ class Config(object):
         parser.add_argument('--variational_dropout', required=False, action='store_true',
                             help=('Pass this flag if variational dropout should be used. NOTE THAT '
                                   'THIS IS TEMPORARY.'))
-        parser.add_argument('--lr_find', required=False, action='store_true',
-                            help=('float >= 0. Maximum learning rate used during cyclic learning.'))
-        parser.add_argument('--max_lr', required=False, type=float,
-                            help=('float >= 0. Maximum learning rate used during cyclic learning.'))
-        parser.add_argument('--min_lr', required=False, type=float,
-                            help=('float >= 0. Minimum learning rate used during cyclic learning.'))
         parser.add_argument('--verbose', required=False, action='store_true',
                             help=('True to display more information, such has model details, '
                                   'hyperparameters, and architecture. Defaults to False.'))

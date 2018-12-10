@@ -6,7 +6,7 @@ from time import strftime
 from keras.callbacks import ModelCheckpoint, TensorBoard
 
 from .. import constants
-from ..cyclical_learning_rate_wrapper import CyclicLRWRapper
+from ..callbacks.cyclic_learning_rate import CyclicLRWRapper
 from ..metrics import Metrics
 from .generic_utils import make_dir
 
@@ -185,9 +185,9 @@ def setup_clr_callback(config, output_dir, training_data):
         train_size = training_data[i]['x_train'][0].shape[0]
         # step size is the amount of iterations it takes to complete one half of a cycle
         step_size = (train_size * config.epochs) / config.batch_size
-
-        clr = CyclicLRWRapper(min_lr=config.min_lr,
-                              max_lr=config.max_lr,
+        # learning rate is a list containing min and max LR bounds at index 0 and -1 respectively
+        clr = CyclicLRWRapper(min_lr=config.learning_rate[0],
+                              max_lr=config.learning_rate[-1],
                               step_size=step_size,
                               mode='triangular',
                               output_dir=output_dir[i],
@@ -213,8 +213,8 @@ def setup_callbacks(config, output_dir, training_data):
     # tensorboard
     if config.tensorboard:
         callbacks.append(setup_tensorboard_callback(output_dir))
-    # learning rate finder
-    if config.lr_find:
+    # we want to use the CLR callback if user provided LR bounds or asked for a LR range test
+    if config.lr_find or len(config.learning_rate) == 2:
         callbacks.append(setup_clr_callback(config, output_dir, training_data))
 
     return callbacks

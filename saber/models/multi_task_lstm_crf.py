@@ -164,7 +164,9 @@ class MultiTaskLSTMCRF(BaseKerasModel):
             self._compile(model=self.models[i],
                           loss_function=crf_loss_function,
                           optimizer=self.config.optimizer,
-                          lr=self.config.learning_rate,
+                          # learning_rate is a list because bounds can be provided, so take
+                          # first index here
+                          lr=self.config.learning_rate[0],
                           decay=self.config.decay,
                           clipnorm=self.config.grad_norm)
 

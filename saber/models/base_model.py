@@ -98,13 +98,12 @@ class BaseKerasModel(object):
             optimizer_ = optimizers.Adam(lr=lr, decay=decay, clipnorm=clipnorm)
         elif optimizer == 'adamax':
             optimizer_ = optimizers.Adamax(lr=lr, decay=decay, clipnorm=clipnorm)
-        # It is recommended to leave the parameters of this optimizer at their
-        # default values (except the learning rate, which can be freely tuned).
+        # It is recommended to leave the parameters of this optimizer at their default values
+        # (except the learning rate, which can be freely tuned).
         # This optimizer is usually a good choice for recurrent neural networks
         elif optimizer == 'rmsprop':
             optimizer_ = optimizers.RMSprop(lr=lr, clipnorm=clipnorm)
-        # It is recommended to leave the parameters of these optimizers at their
-        # default values.
+        # It is recommended to leave the parameters of these optimizers at their default values.
         elif optimizer == 'adagrad':
             optimizer_ = optimizers.Adagrad(clipnorm=clipnorm)
         elif optimizer == 'adadelta':

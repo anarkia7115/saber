@@ -63,6 +63,8 @@ UNITS_CHAR_LSTM = 200
 UNITS_DENSE = UNITS_WORD_LSTM // 2
 # possible models
 MODEL_NAMES = ['mt-lstm-crf',]
+# possbile matching criteria for sequence labelling
+MATCHING_CRITERION = ['left', 'exact', 'right']
 
 # RESTful API
 # endpoint for Entrez Utilities Web Service API
